@@ -6,7 +6,7 @@ const FILES_TO_CACHE = [
 	'./service-worker.js',
 	'./css/styles.css',
 	'./js/index.js',
-	'./idb.js',
+	'./js/idb.js',
 	'./icons/icon-72x72.png',
 	'./icons/icon-96x96.png',
 	'./icons/icon-128x128.png',
@@ -26,16 +26,19 @@ self.addEventListener('install', async e => {
 	);
 });
 
-self.addEventListener('activate', e => {
+self.addEventListener('activate', function (e) {
 	e.waitUntil(
-		caches.keys().then(keyList => {
-			let cacheKeepList = keyList.filter(key => !keyList.includes(key));
-			cacheKeepList.push(CACHE_NAME);
+		caches.keys().then(function (keyList) {
+			console.log(keyList);
+			let cacheKeeplist = keyList.filter(key => key.indexOf(APP_PREFIX));
+			console.log(cacheKeeplist);
 
-			return Promise.resolve(
+			cacheKeeplist.push(CACHE_NAME);
+
+			return Promise.all(
 				keyList.map((key, i) => {
-					if (!cacheKeepList.includes(key)) {
-						console.log('Deleteing cache: ' + keyList[i]);
+					if (cacheKeeplist.indexOf(key) === -1) {
+						console.log('deleteing cache: ' + keyList[i]);
 						return caches.delete(keyList[i]);
 					}
 				})
@@ -45,9 +48,9 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-	if (e.request.headers.method === 'POST') return fetch(e.request);
+	if (e.request.headers.get('method') === 'POST') return fetch(e.request);
 
-	console.log('Fetching ' + e.request.url);
+	// console.log('Fetching ' + e.request.url);
 
 	if (e.request.url.includes('/api/')) {
 		e.respondWith(
@@ -62,19 +65,32 @@ self.addEventListener('fetch', e => {
 							return response;
 						})
 						.catch(err => {
-							return cache.match(e.request);
+							return cache.match(e.request).then(req => {
+								if (req) return req;
+							});
 						})
 				)
 				.catch(err => console.log(err))
 		);
+		return;
 	}
 
 	e.respondWith(
-		fetch(e.request).catch(() => {
-			return caches.match(e.request).then(res => {
-				if (res) return res;
-				else if (evt.request.headers.get('accept').includes('text/html')) return caches.match('/');
-			});
-		})
+		fetch(e.request)
+			.catch(err => {
+				return caches
+					.match(e.request)
+					.then(req => {
+						if (req) {
+							console.log('Found in cache: ' + req);
+							return req;
+						} else {
+							console.log(e.request);
+							return fetch(e.request);
+						}
+					})
+					.catch(err => console.log(err));
+			})
+			.catch(err => console.log(err))
 	);
 });
