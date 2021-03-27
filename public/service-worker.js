@@ -63,11 +63,12 @@ self.addEventListener('fetch', e => {
 							if (response.status === 200) {
 								cache.put(e.request.url, response.clone());
 							}
-							return response;
+							return response.json();
 						})
 						.catch(err => {
 							return cache.match(e.request).then(req => {
 								if (req) return req;
+								else return Promise.resolve({});
 							});
 						})
 				)
