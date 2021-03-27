@@ -1,18 +1,20 @@
 let transactions = [];
 let myChart;
 
-fetch('/api/transaction')
-	.then(response => {
-		return response.json();
-	})
-	.then(data => {
-		// save db data on global variable
-		transactions = data;
+function getTransactions() {
+	fetch('/api/transaction')
+		.then(response => {
+			return response.json();
+		})
+		.then(data => {
+			// save db data on global variable
+			transactions = data;
 
-		populateTotal();
-		populateTable();
-		populateChart();
-	});
+			populateTotal();
+			populateTable();
+			populateChart();
+		});
+}
 
 function populateTotal() {
 	// reduce transaction amounts to a single total value
@@ -80,7 +82,7 @@ function populateChart() {
 	});
 }
 
-function createTransaction(isAdding) {
+function sendTransaction(isAdding) {
 	let nameEl = document.querySelector('#t-name');
 	let amountEl = document.querySelector('#t-amount');
 	let errorEl = document.querySelector('.form .error');
@@ -113,11 +115,6 @@ function createTransaction(isAdding) {
 	populateTable();
 	populateTotal();
 
-	sendTransaction(transaction);
-}
-
-// separated client-side object creation from fetch request to make room for offline functionality
-function sendTransaction(transaction) {
 	fetch('/api/transaction', {
 		method: 'POST',
 		body: JSON.stringify(transaction),
@@ -155,3 +152,5 @@ document.querySelector('#add-btn').onclick = function () {
 document.querySelector('#sub-btn').onclick = function () {
 	sendTransaction(false);
 };
+
+getTransactions();
