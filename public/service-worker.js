@@ -3,7 +3,6 @@ const VERSION = '-v01';
 const CACHE_NAME = APP_PREFIX + VERSION;
 const FILES_TO_CACHE = [
 	'./index.html',
-	'./service-worker.js',
 	'./css/styles.css',
 	'./js/index.js',
 	'./js/idb.js',
@@ -24,6 +23,7 @@ self.addEventListener('install', async e => {
 			return cache.addAll(FILES_TO_CACHE);
 		})
 	);
+	self.skipWaiting();
 });
 
 self.addEventListener('activate', function (e) {
@@ -45,6 +45,7 @@ self.addEventListener('activate', function (e) {
 			);
 		})
 	);
+	self.clients.claim();
 });
 
 self.addEventListener('fetch', e => {
@@ -76,21 +77,23 @@ self.addEventListener('fetch', e => {
 	}
 
 	e.respondWith(
-		fetch(e.request)
-			.catch(err => {
-				return caches
-					.match(e.request)
-					.then(req => {
-						if (req) {
-							console.log('Found in cache: ' + req);
-							return req;
-						} else {
-							console.log(e.request);
-							return fetch(e.request);
-						}
-					})
-					.catch(err => console.log(err));
+		caches
+			.match(e.request)
+			.then(function (response) {
+				if (response) {
+					return response;
+				} else {
+					return fetch(e.request);
+				}
 			})
-			.catch(err => console.log(err))
+			.catch(function (err) {
+				console.log(err);
+				if (
+					e.request.url === 'http://localhost:3001' ||
+					e.request.url === 'https://damp-reaches-81626.herokuapp.com/'
+				) {
+					return caches.match('./index.html');
+				}
+			})
 	);
 });
