@@ -11,3 +11,5 @@ Using the capabilities provided by IndexedDB, if a new transaction cannot be sen
 A service worker is in place to cache essential data for website functionality, including the most recent transactions provided by the server. The service worker also intercepts fetch requests, allowing the browser to utilize locally cached files when the server cannot be reached.
 
 In addition, the app can be saved on the user's device (see manifest.json for details).
+
+Deployment URL: https://damp-reaches-81626.herokuapp.com/
